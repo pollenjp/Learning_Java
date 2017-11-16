@@ -234,7 +234,8 @@ public class basic04Server {
 }
 ```
 
-### 5. クライアント側から文字列が送られてきたら、何番目にアクセスしてきたクライアントかをサーバー内で記憶させて表示させる（サーバー起動時にカウンタを0にする。）
+## 5. クライアント側から文字列が送られてきたら、何番目にアクセスしてきたクライアントかをサーバー内で記憶させて表示させる（サーバー起動時にカウンタを0にする。）
+
 ```java:basic05Server.java
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -272,7 +273,168 @@ public class basic05Server {
 ```
 
 
-### 6. クライアントからサーバーに送る文字列を複数行にする
+## 6. クライアントからサーバーに送る文字列を複数行にする
 
+```java:basic06Server.java
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
+import java.util.Date;
+public class basic06Server {
+    public static void main(String[] args) {
+        try{
+            ServerSocket server = new ServerSocket(3838, 5);
+            int order = 0;              // add
+            while(true){
+                System.out.println("サーバーは稼働しています。");
+                Socket socket = server.accept();
+                order += 1;             // add
+				Scanner input = new Scanner(socket.getInputStream());
+				System.out.println("クライアントから送られてきたメッセージは「");   // change
+                String getString = input.nextLine();
+                while(!getString.equals("QUIT")){                                   // change:"QUIT"の文字列が来たら終了
+                    System.out.println(getString);                                  // change
+                    getString = input.nextLine();                                   // add
+                }
+				System.out.println("」です");                                       // change
+                String clientIpAddress = socket.getRemoteSocketAddress().toString();
+                System.out.println( "クライアントのIPアドレスとport番号は「" + clientIpAddress + "」");
+                String clientIpAddr = socket.getInetAddress().getHostAddress().toString();
+                System.out.println( "クライアントのIPアドレスとport番号は「" + clientIpAddr + "」");
+                Date time = new Date();
+                System.out.println( "時刻：「" + time + "」");
+                System.out.println( "このクライアントは「" + order + "」番目です。");
+                PrintWriter output = new PrintWriter(socket.getOutputStream());
+                output.println("こんにちは！こちらはサーバーです！");
+                output.close();
+                socket.close();
+            }
+        } catch (Exception e){
+            System.out.println(e);
+        }
+    }
+}
+```
+
+```java:basic06Client.java
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Scanner;
+public class basic06Client {
+	public static void main(String args[]){
+		try{
+			Socket socket = new Socket("127.0.0.1", 3838);
+			PrintWriter output = new PrintWriter(socket.getOutputStream());
+			BufferedReader consoleIn = new BufferedReader( new InputStreamReader(System.in) );
+			//String consoleInStr = consoleIn.readLine();       // remove
+			String consoleInStr = "";                           // add
+            while(!consoleInStr.equals("QUIT")){                // change:"QUIT"と入力すると終了
+			    consoleInStr = consoleIn.readLine();
+                output.println(consoleInStr);
+                output.flush();
+            }
+			Scanner input = new Scanner(socket.getInputStream());
+			System.out.println(input.nextLine());
+			input.close();
+			output.close();
+			socket.close();
+		} catch(Exception e){
+			System.out.println(e);
+		}
+	}
+}
+```
+
+参考：<a href="https://www.javadrive.jp/start/string/index4.html">文字列と文字列の比較</a>
+
+
+## 7. サーバーからクライアントに送る文字列を複数行にする
+
+```java:basic07Server.java
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
+import java.util.Date;
+public class basic07Server {
+    public static void main(String[] args) {
+        try{
+            ServerSocket server = new ServerSocket(3838, 5);
+            int order = 0;              // add
+            while(true){
+                System.out.println("サーバーは稼働しています。");
+                Socket socket = server.accept();
+                order += 1;             // add
+				Scanner input = new Scanner(socket.getInputStream());
+				System.out.println("クライアントから送られてきたメッセージは「");
+                String getString = input.nextLine();
+                while(!getString.equals("QUIT")){
+                    System.out.println(getString);
+                    getString = input.nextLine();
+                }
+				System.out.println("」です");
+                String clientIpAddress = socket.getRemoteSocketAddress().toString();
+                System.out.println( "クライアントのIPアドレスとport番号は「" + clientIpAddress + "」");
+                String clientIpAddr = socket.getInetAddress().getHostAddress().toString();
+                System.out.println( "クライアントのIPアドレスとport番号は「" + clientIpAddr + "」");
+                Date time = new Date();
+                System.out.println( "時刻：「" + time + "」");
+                System.out.println( "このクライアントは「" + order + "」番目です。");
+                PrintWriter output = new PrintWriter(socket.getOutputStream());
+                // クライアントにかえすメッセージを複数にする
+                output.println( "START SERVER MESSAGE");                // add
+                output.println( "-------------------------------");     // add
+                output.println( "こんにちは！" );                       // add
+                output.println( "こちらはサーバーです。" );             // add
+                output.println( "複数行の文字列を送ります。");          // add   
+                output.println( "-------------------------------");     // add   
+                output.println( "END SERVER MESSAGE");                  // add   
+                //output.println("こんにちは！こちらはサーバーです！");         // remove
+                output.close();
+                socket.close();
+            }
+        } catch (Exception e){
+            System.out.println(e);
+        }
+    }
+}
+```
+
+```java:basic07Client.java
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Scanner;
+public class basic07Client {
+	public static void main(String args[]){
+		try{
+			Socket socket = new Socket("127.0.0.1", 3838);
+			PrintWriter output = new PrintWriter(socket.getOutputStream());
+			BufferedReader consoleIn = new BufferedReader( new InputStreamReader(System.in) );
+			String consoleInStr = "";
+            while(!consoleInStr.equals("QUIT")){
+			    consoleInStr = consoleIn.readLine();
+                output.println(consoleInStr);
+                output.flush();
+            }
+			Scanner input = new Scanner(socket.getInputStream());
+            String serverMessage = "";                              // add
+            while(!serverMessage.equals("END SERVER MESSAGE")){     // add
+                serverMessage = input.nextLine();                   // add
+                System.out.println(serverMessage);                  // add
+            }                                                       // add
+			input.close();
+			output.close();
+			socket.close();
+		} catch(Exception e){
+			System.out.println(e);
+		}
+	}
+}
+```
 
 
